@@ -1,0 +1,14 @@
+- type: gameMap
+  id: Wasteland
+  mapName: Wasteland
+  mapPath: /Maps/Rustlands/wasteland.yml
+  minPlayers: 0
+  stations:
+    Wasteland:
+      stationProto: RustlandsStation
+      components:
+        - type: StationNameSetup
+          mapNameTemplate: Wasteland
+        - type: StationJobs
+          availableJobs:
+            Passenger: [ -1, -1 ]

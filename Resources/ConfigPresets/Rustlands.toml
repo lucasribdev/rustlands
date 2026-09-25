@@ -1,0 +1,26 @@
+# Rustlands free exploration. Load explicitly with --config-file or config.presets.
+# See Docs/Rustlands-rounds.md for startup and validation instructions.
+[game]
+hostname = "Rustlands"
+desc = "Free exploration in the Wasteland."
+map = "Wasteland"
+map_rotation = false
+defaultpreset = "Rustlands"
+fallbackenabled = false
+lobbyenabled = true
+disallowlatejoins = false
+
+[events]
+enabled = false
+
+[shuttle]
+arrivals = false
+emergency = false
+auto_call_time = 0
+auto_call_extension_time = 0
+
+[vote]
+preset_enabled = false
+map_enabled = false
+# Keep the existing player-driven way to end an exploration session.
+restart_enabled = true

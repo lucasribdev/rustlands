@@ -1,0 +1,9 @@
+# No station events, antagonists, map variation or automatic victory conditions.
+- type: gamePreset
+  id: Rustlands
+  alias:
+  - rustlands
+  name: rustlands-title
+  description: rustlands-description
+  showInVote: false
+  rules: []

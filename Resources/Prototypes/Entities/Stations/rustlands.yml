@@ -1,0 +1,10 @@
+# Reuse station ownership, character spawning and records without space infrastructure.
+- type: entity
+  id: RustlandsStation
+  parent:
+  - BaseStation
+  - BaseStationJobsSpawning
+  - BaseStationRecords
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Transform

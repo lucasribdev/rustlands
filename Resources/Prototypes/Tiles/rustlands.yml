@@ -1,0 +1,22 @@
+# Outdoor terrain uses the breathable MapAtmosphere, not sealed room air.
+- type: tile
+  id: RustlandsDesert
+  parent: FloorDesert
+  isSpace: true
+
+- type: tile
+  id: RustlandsDesertRoad
+  parent: FloorAsteroidIronsandBorderless
+  isSpace: true
+  indestructible: true
+
+# Open-air planks must use the same map atmosphere as the surrounding desert.
+- type: tile
+  id: RustlandsWood
+  parent: FloorWood
+  isSpace: true
+
+- type: tile
+  id: RustlandsBrokenWood
+  parent: FloorBrokenWood
+  isSpace: true
