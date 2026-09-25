@@ -1736,7 +1736,7 @@ entities:
           - type: Transform
             parent: 2
             pos: 13.5,-18.5
-  - proto: SpawnPointPassenger
+  - proto: SpawnPointRustlandsSurvivor
     entities:
       - uid: 286
         components:

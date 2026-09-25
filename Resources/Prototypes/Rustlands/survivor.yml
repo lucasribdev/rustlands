@@ -1,0 +1,72 @@
+# Rustlands identity: uses the standard character, job and inventory systems.
+- type: job
+  id: RustlandsSurvivor
+  name: job-name-rustlands-survivor
+  description: job-description-rustlands-survivor
+  playTimeTracker: JobRustlandsSurvivor
+  startingGear: RustlandsSurvivorGear
+  supervisors: job-supervisors-rustlands-survivor
+  overrideConsoleVisibility: false
+
+- type: playTimeTracker
+  id: JobRustlandsSurvivor
+
+# Required for the existing character editor to list the role.
+- type: department
+  id: Rustlands
+  name: department-rustlands
+  description: department-rustlands-description
+  color: "#9B8968"
+  ignoreForDepartmentFallback: true
+  roles:
+  - RustlandsSurvivor
+
+# Preserve essential species breathing support, without station survival boxes.
+- type: roleLoadout
+  id: JobRustlandsSurvivor
+  groups:
+  - GroupTankHarness
+  - RustlandsSurvivorBreathing
+  - GroupSpeciesBreathTool
+
+- type: loadoutGroup
+  id: RustlandsSurvivorBreathing
+  name: loadout-group-rustlands-breathing
+  hidden: true
+  loadouts:
+  - LoadoutSpeciesVoxNitrogen
+
+- type: startingGear
+  id: RustlandsSurvivorGear
+  equipment:
+    jumpsuit: ClothingUniformJumpsuitColorGrey
+    shoes: ClothingShoesColorBlack
+    back: ClothingBackpack
+  storage:
+    back:
+    - RustlandsWaterBottle
+    - FoodSnackRaisins
+    - Gauze1
+
+# Keep the existing refillable bottle, changing only the starting supply.
+- type: entity
+  parent: DrinkWaterBottleFull
+  id: RustlandsWaterBottle
+  suffix: Rustlands, Partially filled
+  components:
+  - type: Solution
+    solution:
+      reagents:
+      - ReagentId: Water
+        Quantity: 20
+
+- type: entity
+  parent: SpawnPointJobBase
+  id: SpawnPointRustlandsSurvivor
+  name: survivor spawn point
+  components:
+  - type: SpawnPoint
+    job_id: RustlandsSurvivor
+  - type: Sprite
+    layers:
+    - state: green

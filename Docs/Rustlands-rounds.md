@@ -1,95 +1,160 @@
-# Rodadas de Rustlands
+# Rustlands rounds
 
-## Inicialização
+## Startup
 
-Na raiz do repositório, use o perfil dedicado:
+From the repository root, use the dedicated profile:
 
 ```sh
 dotnet run --project Content.Server -- --config-file Resources/ConfigPresets/Rustlands.toml
 ```
 
-Em uma instalação com configuração própria, adicione `presets = "Rustlands"` à seção
-`[config]` do arquivo do servidor. Presets são valores padrão: valores explícitos
-no arquivo do host e na linha de comando têm precedência. Remova overrides antigos
-conflitantes de mapa, modo, eventos e shuttle. Os scripts genéricos `runserver.*`
-continuam genéricos; executar apenas esses scripts não seleciona Rustlands.
-O antigo override de Wasteland foi movido do exemplo `server_config.toml` para
-`Rustlands.toml`. Nenhum padrão global em C# ou modo genérico foi alterado.
+For an installation with its own configuration, add `presets = "Rustlands"` to the
+server configuration's `[config]` section. Presets supply defaults: explicit values
+in the host configuration and command line take precedence. Remove old conflicting
+map, mode, event, and shuttle overrides. The generic `runserver.*` scripts remain
+generic; running those scripts alone does not select Rustlands.
+The old Wasteland override was moved from the example `server_config.toml` to
+`Rustlands.toml`. No global C# defaults or generic game modes were changed.
 
-## Investigação e decisões
+## Findings and decisions
 
-| Área | Herança encontrada | Base Rustlands |
+| Area | Inherited behavior | Rustlands baseline |
 | --- | --- | --- |
-| Modo | Sem modo explícito, o padrão é `Secret`; fallback permite `Traitor,Extended`. | Preset `Rustlands`, `rules: []`, sem fallback e sem voto de troca de modo. |
-| Eventos | O exemplo habilitava eventos. `Extended` ainda inclui meteoros, eventos de estação e tráfego espacial. `Greenshift` ainda aplica `BasicRoundstartVariation`. | Sem schedulers; `events.enabled = false`. Sem variações automáticas de fios, luzes, lixo, contrabando ou painéis solares. |
-| Estação | `TestStation` já não tinha arrivals, CentComm ou evacuação, mas incluía alertas de estação. | `RustlandsStation` reutiliza somente `BaseStation`, `BaseStationJobsSpawning` e `BaseStationRecords`. Sem alertas, carga, CentComm, expedições ou elegibilidade a eventos. |
-| Funções | O mapa só oferece `Passenger`, ilimitado no início e na entrada tardia. | Mantido para reutilizar criação de personagem, loadouts e registros. Não há seleção automática de antagonistas. |
-| Objetivos | Regras de antagonistas podem gerar missões e condições de vitória ligadas à estação. | Sem objetivos atribuídos pelo modo, vitória obrigatória ou prazo. Explorar, sobreviver e interagir são escolhas dos jogadores. |
-| Chegada | Existe um `SpawnPointLatejoin` no grid associado a `Wasteland`. | Adicionado `SpawnPointPassenger` no mesmo local para roundstart, evitando o fallback de spawn inválido; arrivals desligado. Lobby e latejoin habilitados. |
-| Evacuação | `RoundEndSystem` verifica a chamada automática independentemente da lista de regras; o exemplo usa 90 minutos. | `shuttle.emergency = false`, chamada inicial e extensão zeradas, sem componente de evacuação na estação. |
-| Encerramento | Regras específicas e evacuação podem encerrar a rodada; votação também pode reiniciar diretamente. | Sem regra de limite de tempo, inatividade ou vitória. Voto de reinício e comandos administrativos permanecem. |
+| Mode | Without an explicit mode, the default is `Secret`; fallback allows `Traitor,Extended`. | `Rustlands` preset, `rules: []`, no fallback, and no mode-change vote. |
+| Events | The example enabled events. `Extended` still includes meteors, station events, and space traffic. `Greenshift` still applies `BasicRoundstartVariation`. | No schedulers; `events.enabled = false`. No automatic variations of wires, lights, trash, contraband, or solar panels. |
+| Station | `TestStation` already lacked arrivals, CentComm, and evacuation, but included station alerts. | `RustlandsStation` reuses only `BaseStation`, `BaseStationJobsSpawning`, and `BaseStationRecords`. No alerts, cargo, CentComm, expeditions, or event eligibility. |
+| Jobs | The map used `Passenger` and its station loadout. | `RustlandsSurvivor` (Survivor), with `[-1, -1]` slots, a dedicated kit, and no access permissions. Reuses characters, inventory, and records. No automatic antagonist selection. |
+| Objectives | Antagonist rules can generate station-related missions and victory conditions. | No mode-assigned objectives, mandatory victory, or deadline. Exploring, surviving, and interacting are player choices. |
+| Arrival | A `SpawnPointLatejoin` exists on the grid associated with `Wasteland`. | `SpawnPointRustlandsSurvivor` uses the same location for round start, avoiding invalid spawn fallback; arrivals disabled. Lobby and late joining enabled. |
+| Evacuation | `RoundEndSystem` checks automatic calls independently of the rule list; the example uses 90 minutes. | `shuttle.emergency = false`, initial call and extension set to zero, and no evacuation component on the station. |
+| Round ending | Specific rules and evacuation can end a round; voting can also restart it directly. | No time-limit, inactivity, or victory rule. Restart voting and administrative commands remain available. |
 
-Selecionar somente o modo Rustlands não aplica CVars do perfil de servidor.
-É necessário carregar o perfil completo para impedir chamadas automáticas e
-mudanças de modo. Admins ainda podem deliberadamente mudar CVars, adicionar regras
-ou encerrar a sessão; esta configuração não bloqueia ferramentas administrativas.
+Selecting only the Rustlands mode does not apply the server profile's CVars.
+Load the full profile to prevent automatic shuttle calls and mode changes.
+Admins can still deliberately change CVars, add rules, or end the session;
+this configuration does not block administrative tools.
 
-## O que permanece ativo
+## What remains active
 
-Nenhuma entidade de `GameRule` é adicionada pelo novo preset. Continuam ativos o
-GameTicker, lobby, personagens, vagas, spawn, registros e os sistemas normais dos
-objetos e criaturas: dano, morte, fome, sede, inventário, interação e construção.
-Não é o modo `Sandbox`: não concede ferramentas de criação aos jogadores.
-O mapa mantém atmosfera respirável, gravidade e iluminação já configuradas.
+The new preset adds no `GameRule` entities. GameTicker, the lobby, characters,
+job slots, spawning, records, and normal object and creature systems remain active:
+damage, death, hunger, thirst, inventory, interaction, and construction.
+This is not `Sandbox` mode and does not grant players creation tools.
+The map retains its configured breathable atmosphere, gravity, and lighting.
 
-A função provisória ainda se chama Passenger e reutiliza PDA, headset, acessos e
-loadouts da estação. Não há cadeia de comando implementada para o deserto; textos
-de supervisão e aparência do equipamento são dívida temática conhecida. Não foi
-criado um sistema novo de profissões, missões, respawn ou persistência. Morrer não
-encerra a rodada automaticamente nem garante renascimento.
+The initial identity is **Survivor** (`RustlandsSurvivor`). The Rustlands category
+makes it selectable through existing preferences; it does not represent a hierarchy.
+The `JobRustlandsSurvivor` tracker satisfies the standard job contract, with no
+unlocks, skills, classes, or progression. There are no playtime requirements,
+access permissions, supervisors, PDAs, radios, or ID cards. The Passenger loadout
+is not applied. Other maps and the Passenger job remain unchanged.
 
-O voto de reinício mantém as restrições genéricas (incluindo população/fantasmas,
-quórum e presença de admin). `restartround` encerra e agenda a próxima rodada pelo
-fluxo existente; `restartroundnow` reinicia imediatamente. Um reinício não preserva
-o mundo. Não usar chamada de evacuação como mecanismo normal de encerramento.
+### Starting kit
 
-## Validação e roteiro em jogo
+| Slot/content | Prototype | Compatibility and quantity |
+| --- | --- | --- |
+| Clothing | `ClothingUniformJumpsuitColorGrey` | Simple clothing, `jumpsuit` slot (`innerclothing`), no armor protection. |
+| Footwear | `ClothingShoesColorBlack` | `shoes` slot (`FEET`), no armor protection. |
+| Backpack | `ClothingBackpack` | `back` slot, storage grid of 7 × 4 cells. |
+| Water in backpack | `RustlandsWaterBottle` | Inherits `DrinkWaterBottleFull`; retains a 60u container, starts with only 20u of `Water`, Small size. |
+| Food in backpack | `FoodSnackRaisins` | One portion, 10u of `Nutriment`, Tiny size. |
+| Dressing in backpack | `Gauze1` | One gauze application for bleeding, cuts, and punctures, Small size. |
 
-A validação estática deve conferir TOML, CVars existentes, referências YAML,
-localização, herança da estação e vínculo do ponto de entrada ao grid Wasteland.
-O linter completo pode ser executado com:
+All three supplies fit in the backpack simultaneously (default shapes of 2, 1, and
+2 cells), do not match its blacklist, and use the normal drinking, eating, and
+healing systems. The partially filled bottle is exclusive to Rustlands; the generic
+bottle remains full. The clothing retains its original components, including
+sensors, but spawning does not depend on a station network. There are no weapons,
+armor, tools, emergency boxes, or advanced medicines: the kit supports an initial
+search for resources without sustaining indefinite exploration.
+
+The default human breathes Wasteland's atmosphere without additional equipment.
+The dedicated roleLoadout preserves only conditional life support for Vox:
+`GroupTankHarness`, `RustlandsSurvivorBreathing`, and `GroupSpeciesBreathTool`.
+These reuse `LoadoutTankHarness`, `LoadoutSpeciesVoxNitrogen`, and
+`LoadoutSpeciesBreathTool`, all restricted by `EffectSpeciesVox`. Vox therefore
+receive a tank harness, nitrogen tank, and mask; humans receive no extras.
+The `Survival` group and its station boxes are not included. Existing species
+physiology, diets, and healing restrictions remain in effect.
+No new respawn or persistence system was created. Death does not automatically
+end the round or guarantee respawning.
+
+Restart voting retains the generic restrictions (including population/ghosts,
+quorum, and admin presence). `restartround` ends the current round and schedules
+the next through the existing flow; `restartroundnow` restarts immediately.
+A restart does not preserve the world. Do not use evacuation calls as the normal
+way to end a round.
+
+## Validation and in-game test procedure
+
+Static validation should check TOML, existing CVars, YAML references, localization,
+station inheritance, and the spawn point's association with the Wasteland grid.
+Run the full linter with:
 
 ```sh
 dotnet run --project Content.YAMLLinter
 ```
 
-Teste em jogo ainda necessário:
+To check item insertion through the engine, also run the existing test
+(covers all `startingGear` prototypes, including `RustlandsSurvivorGear`):
 
-1. Iniciar pelo comando acima; conferir mapa Wasteland, modo Rustlands, lobby e
-   ausência de regras automáticas com as ferramentas administrativas.
-2. Entrar como Passenger no início e com um segundo cliente após o início:
-   ambos devem aparecer no ponto local, sem terminal/nave de arrivals. Conferir
-   preferências de personagem, loadout e ausência de objetivos de antagonista.
-3. Explorar e testar dano, morte, fome/sede e interação. Conferir que não há
-   concessão de ferramentas de Sandbox ou término automático com todos mortos.
-4. Ultrapassar 90 minutos: nenhuma chamada de evacuação, meteoros ou tráfego
-   espacial automático. Conferir também os valores efetivos dos CVars do perfil.
-5. Conferir indisponibilidade de voto de modo/mapa; testar voto de reinício nas
-   condições genéricas permitidas e `restartround`. A rodada seguinte deve manter
-   Wasteland/Rustlands e permitir novas entradas.
-6. Iniciar separadamente sem o perfil e conferir que modos e mapas genéricos
-   continuam disponíveis. Não reutilizar overrides Rustlands nesse teste.
+```sh
+dotnet test Content.IntegrationTests --filter FullyQualifiedName~StartingGearPrototypeStorageTest
+```
 
-### Resultado desta execução
+This test checks individual insertion. The procedure below checks the entire kit
+simultaneously and actual spawning.
 
-- Validação estática aprovada: TOML e nomes de CVars, referências YAML,
-  localização, composição da estação, spawns inicial/tardio, contagem de entidades
-  e restauração do exemplo genérico. Tags YAML do engine foram aceitas pelo
-  parser estático; sua semântica ainda depende da validação pelo engine.
-- `git diff --check`: sem erros.
-- Tentativa do linter com o binário disponível:
-  `dotnet bin/Content.YAMLLinter/Content.YAMLLinter.dll`. Bloqueada antes da
-  validação por `ArgumentOutOfRangeException` em `ResourceCache.PreloadRsis`
-  (`ImageSharp`, altura de imagem igual a zero). Isso não confirma aprovação
-  dos protótipos pelo engine. Reexecutar o linter em ambiente funcional.
-- Nenhum teste com clientes em jogo foi executado; roteiro acima pendente.
+In-game testing is still required:
+
+1. Start the server using the startup command above. Check the Wasteland map,
+   Rustlands mode, lobby, and absence of automatic rules using administrative tools.
+2. Create a human with a custom name and appearance. Under Rustlands, select
+   Survivor at high priority and ready up in the lobby. Start the round:
+   the character should appear on the Wasteland grid at `0.5,-1.5` through
+   `SpawnPointRustlandsSurvivor`, retaining their name and appearance. Check for
+   no antagonist objectives and no spawn/equipment errors in the log.
+3. Join with a second human after the round starts and select Survivor:
+   the character should use `SpawnPointLatejoin` on the same grid and location,
+   without arrivals. Repeat with more players: slots should remain available
+   for both entry types. Also test unavailable job preferences with the option
+   to join as overflow: the assigned job should be Survivor, never Passenger.
+4. For both entry types, check every item and quantity in the table, supplies
+   inside the backpack, and no items dropped by failed equipment insertion.
+   Check empty ID/ear slots and the absence of access permissions, PDAs, headsets,
+   weapons, emergency boxes, and the old loadout, including a profile previously
+   configured for Passenger. Open the bottle, drink, eat, and apply gauze to an
+   appropriate injury; confirm finite consumption and reduced bleeding.
+   Test removing and reinserting items. Check that the supervisor message does
+   not refer to station command. Repeat both entry types with Vox: the mask,
+   harness, and tank should be equipped, internals functional, and the backpack
+   should contain the same basic kit. Humans should not receive this support.
+   Check eating behavior according to the species' diet.
+5. Explore and test damage, death, hunger/thirst, and interaction. Check that
+   players do not receive Sandbox tools and the round does not automatically
+   end when everyone dies.
+6. Continue beyond 90 minutes: no automatic evacuation call, meteors, or space
+   traffic. Also check the profile's effective CVar values.
+7. Check that mode/map voting is unavailable. Test restart voting under the
+   permitted generic conditions and `restartround`. The next round should retain
+   Wasteland/Rustlands and allow new entries.
+8. Start separately without the profile and check that generic modes and maps
+   remain available. Do not reuse Rustlands overrides for this test.
+
+### Implementation validation results
+
+- Static Survivor validation covered job, tracker, category, and localization
+  references; item inheritance, slots, sizes, quantities, and blacklist;
+  unlimited round-start/late-join slots and markers on the same grid/location.
+- Breathing support: referenced groups/loadouts exist, apply `EffectSpeciesVox`,
+  and use existing entities; no `Survival` group.
+- `git diff --check`: no errors (only CRLF/LF normalization warnings).
+- The attempt to run `dotnet bin/Content.YAMLLinter/Content.YAMLLinter.dll` was
+  stopped after approximately seven minutes without output or a result. This
+  does not confirm engine validation of the prototypes. The environment already
+  had a previous failure recorded in `ResourceCache.PreloadRsis`/ImageSharp;
+  this attempt produced no diagnostic linking the delay to the same cause.
+  Rerun the linter in a working environment, preferably building from source
+  with the command above.
+- No game clients or engine storage test were run; the round-start/late-join,
+  equipment, and consumption test procedure remains pending.

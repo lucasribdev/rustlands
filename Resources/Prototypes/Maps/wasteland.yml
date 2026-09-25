@@ -11,4 +11,4 @@
           mapNameTemplate: Wasteland
         - type: StationJobs
           availableJobs:
-            Passenger: [ -1, -1 ]
+            RustlandsSurvivor: [ -1, -1 ]
